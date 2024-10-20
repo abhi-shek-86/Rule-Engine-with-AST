@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rule Engine</title>
+    <style>
+        /* General styles */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+
+        /* Header styles */
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+
+        /* Section styles */
+        h2 {
+            color: #555;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 5px;
+        }
+
+        /* Input and button styles */
+        input[type="text"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Result display styles */
+        div[id$="Result"] {
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Responsive styles */
+        @media (min-width: 600px) {
+            input[type="text"] {
+                width: 400px;
+            }
+
+            button {
+                width: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Rule Engine</h1>
+
+    <h2>Create Rule</h2>
+    <input type="text" id="ruleInput" placeholder="Enter rule (e.g., age > 30)">
+    <button onclick="createRule()">Create Rule</button>
+    <div id="createRuleResult"></div>
+
+    <h2>Combine Rules</h2>
+    <input type="text" id="ast1Input" placeholder="Enter first AST">
+    <input type="text" id="ast2Input" placeholder="Enter second AST">
+    <button onclick="combineRules()">Combine Rules</button>
+    <div id="combineRuleResult"></div>
+
+    <h2>Evaluate Rule</h2>
+    <input type="text" id="evaluationAstInput" placeholder="Enter AST">
+    <input type="text" id="dataInput" placeholder="Enter data as JSON (e.g., { 'age': 25 })">
+    <button onclick="evaluateRule()">Evaluate Rule</button>
+    <div id="evaluateResult"></div>
+
+    <script>
+        async function createRule() {
+            const ruleInput = document.getElementById('ruleInput').value;
+
+            const response = await fetch('http://127.0.0.1:8000/create_rule', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ rule_string: ruleInput }),
+            });
+
+            const resultDiv = document.getElementById('createRuleResult');
+
+            if (response.ok) {
+                const data = await response.json();
+                resultDiv.innerHTML = `<strong>Rule Created:</strong> <pre>${JSON.stringify(data.AST, null, 2)}</pre>`;
+            } else {
+                resultDiv.innerText = 'Error creating rule: ' + response.statusText;
+            }
+        }
+
+        async function combineRules() {
+            const ast1Input = document.getElementById('ast1Input').value;
+            const ast2Input = document.getElementById('ast2Input').value;
+
+            const response = await fetch('http://127.0.0.1:8000/combine_rules', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    ast1: JSON.parse(ast1Input),
+                    ast2: JSON.parse(ast2Input)
+                }),
+            });
+
+            const resultDiv = document.getElementById('combineRuleResult');
+
+            if (response.ok) {
+                const data = await response.json();
+                resultDiv.innerHTML = `<strong>Combined AST:</strong> <pre>${JSON.stringify(data.combined_AST, null, 2)}</pre>`;
+            } else {
+                resultDiv.innerText = 'Error combining rules: ' + response.statusText;
+            }
+        }
+
+        async function evaluateRule() {
+            const evaluationAstInput = document.getElementById('evaluationAstInput').value;
+            const dataInput = document.getElementById('dataInput').value;
+
+            const response = await fetch('http://127.0.0.1:8000/evaluate_rule', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    ast: JSON.parse(evaluationAstInput),
+                    data: JSON.parse(dataInput)
+                }),
+            });
+
+            const resultDiv = document.getElementById('evaluateResult');
+
+            if (response.ok) {
+                const data = await response.json();
+                resultDiv.innerText = 'Evaluation Result: ' + data.evaluation_result;
+            } else {
+                resultDiv.innerText = 'Error evaluating rule: ' + response.statusText;
+            }
+        }
+    </script>
+</body>
+</html>
